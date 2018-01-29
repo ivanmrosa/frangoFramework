@@ -1,0 +1,9 @@
+{
+    "general-js": [
+        "js/app.js",
+        "js/app-routes.js"
+    ],
+    "components-js": [
+        "js/components.js"
+    ]
+}

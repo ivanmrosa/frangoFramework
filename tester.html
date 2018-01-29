@@ -1,0 +1,51 @@
+<!doctype HTML>
+<html>
+
+<head>
+    <title>teste</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="frango/frango.css">
+    <link rel="stylesheet" href="css/app.css">
+
+</head>
+
+<body>
+
+    <div id="app">
+        <div class="page-control">
+            <div class="tab-group">
+                <div class="tab active" data-body="tab1">teste1</div>
+                <div class="tab" data-body="tab2">teste2</div>
+                <div class="tab" data-body="tab3">teste3</div>
+            </div>
+            <div class="tab-body-group">
+                <div class="tab-body active bck-blue" name="tab1">
+                    body 1
+                </div>
+                <div class="tab-body bck-red" name="tab2">
+                    body 2
+                </div>
+                <div class="tab-body bck-green" name="tab3">
+                    body 3
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!--<script src="js/jquery-3.1.1.min.js"></script>
+    <script src="js/jquery.mask.min.js"></script> -->
+
+    <script type="text/javascript" src="frango/frango.js"></script>
+    <script type="text/javascript" src="frango/configFrango.js"></script>
+    <script type="text/javascript" src="js/components.js"></script>
+    <script type="text/javascript" src="js/app.js"></script>
+    <script type="text/javascript">
+        window.addEventListener('load', function () {
+            frango.tab(true);
+        });
+    </script>
+</body>
+
+</html>
