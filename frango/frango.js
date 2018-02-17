@@ -674,7 +674,7 @@ frango.touch.tab.removeSlowMoviment = function (tabBodies) {
     tabBodies.rmCl('slow-vertical-moviment');
 };
 
-frango.touch.tab.moveX = function (elementTouched, posX, locked, slowMove) {
+frango.touch.tab.moveX = function (elementTouched, posX, locked, slowMove) {    
     var bodies = frango.find('.tab-body', elementTouched);
     var tot = bodies.elements.length;
     var leftLast = bodies.elements[tot - 1].offsetLeft;
@@ -725,7 +725,7 @@ frango.touch.tab.moveX = function (elementTouched, posX, locked, slowMove) {
 
 }
 
-frango.touch.tab.handleMoviment = function (event) {
+frango.touch.tab.handleMoviment = function (event) {    
     event.preventDefault();
     var elementTouched = this;
     var touches = event.changedTouches;
@@ -738,7 +738,7 @@ frango.touch.tab.handleMoviment = function (event) {
 }
 
 frango.touch.tab.startTouch = function (event) {
-    event.preventDefault();
+    //event.preventDefault();
     var touches = event.changedTouches;
     var elementTouched = this;
     frango.touch.tab.oldX = touches[0].pageX;
@@ -749,8 +749,8 @@ frango.touch.tab.startTouch = function (event) {
 
 };
 
-frango.touch.tab.endTouch = function (event) {
-    event.preventDefault();
+frango.touch.tab.endTouch = function (event) {    
+    //event.preventDefault();
     var elementTouched = this;
     var width = elementTouched.offsetWidth;
     var bodies = frango.find('.tab-body', elementTouched);
@@ -758,12 +758,11 @@ frango.touch.tab.endTouch = function (event) {
     var locked = elementTouched.getAttribute('data-locked');
 
 
-
     if (frango.touch.tab.oldX > frango.touch.tab.startx) {
         //puxada para a direita
 
         bodies.loop(function () {
-            if ((this.offsetLeft > 0) && (this.offsetLeft >= width * 0.65) && (!movedEnough)) {
+            if ((this.offsetLeft > 0) && (this.offsetLeft >= width * 0.55) && (!movedEnough)) {
                 frango.touch.tab.oldX = this.offsetLeft;
                 frango.touch.tab.moveX(elementTouched, width, locked, true);
                 movedEnough = true;
@@ -785,7 +784,7 @@ frango.touch.tab.endTouch = function (event) {
         //puxada para a esquerda
 
         bodies.loop(function () {
-            if ((this.offsetLeft > 0) && (this.offsetLeft <= width * 0.35) && (!movedEnough)) {
+            if ((this.offsetLeft > 0) && (this.offsetLeft <= width * 0.45) && (!movedEnough)) {
                 frango.touch.tab.oldX = this.offsetLeft;
                 frango.touch.tab.moveX(elementTouched, 0, locked, true);
                 movedEnough = true;
@@ -808,17 +807,14 @@ frango.touch.tab.endTouch = function (event) {
 
 };
 
-frango.touch.tab.config = function (tabBodyGroup) {
-
+frango.touch.tab.config = function (tabBodyGroup) {    
     tabBodyGroup.on("touchmove", frango.touch.tab.handleMoviment);
     tabBodyGroup.on("touchstart", frango.touch.tab.startTouch);
     tabBodyGroup.on("touchend", frango.touch.tab.endTouch);
-
 }
 
 
-frango.tab = function () {
-
+frango.tab = function (selector) {    
     var setTabsInitialSize = function (pageControl, tabWidth, tabBodies, pageControlWidth, resizing) {
 
         pageControl.find('.tab-group').adSty('width', pageControlWidth + "px");
@@ -880,6 +876,7 @@ frango.tab = function () {
     };
 
     var configurePageControls = function (resizing) {
+        //var pgcSelector = selector || '.page-control';
         frango.find('.page-control').loop(function () {
             var pageControl = this;
             var paretElWidth = pageControl.parentElement.offsetWidth;
@@ -897,9 +894,7 @@ frango.tab = function () {
             if (!resizing) {
                 configureClick(pageControl, tabBodies, tabs);
                 frango.touch.tab.config(pageControl.find('.tab-body-group'));
-            };
-
-
+            };            
         });
     };
     frango.find(window).on('resize', function () {

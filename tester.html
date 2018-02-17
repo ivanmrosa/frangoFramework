@@ -11,28 +11,46 @@
 </head>
 
 <body>
-
+    
     <div id="app">
-        <div class="page-control">
-            <div class="tab-group">
-                <div class="tab active" data-body="tab1">teste1</div>
-                <div class="tab" data-body="tab2">teste2</div>
-                <div class="tab" data-body="tab3">teste3</div>
-            </div>
-            <div class="tab-body-group">
-                <div class="tab-body active bck-blue" name="tab1">
-                    body 1
-                </div>
-                <div class="tab-body bck-red" name="tab2">
-                    body 2
-                </div>
-                <div class="tab-body bck-green" name="tab3">
-                    body 3
-                </div>
-            </div>
 
-        </div>
+
+     <div class="parent">
+        <div class="child">TESTANDO 1</div>
+        <div class="child">TESTANDO 1</div>
+        <div class="child">TESTANDO 1</div>
+        <div class="child">TESTANDO 1</div>
+        <div class="child">TESTANDO 1</div>
+     </div>
+
+            <div class="page-control">
+                    <div class="tab-group">
+                            <div class="tab active" data-body="words">Words</div>
+                            <div class="tab" data-loaded="false" id="tab-media" data-body="media">Media</div>
+                            <div class="tab" data-body="dictation">Dictation</div>    
+                            <div class="tab" data-body="speech">Pronounce</div>                        
+                    </div>
+                    <div class="tab-body-group col s12">
+                        <div id="words" name="words"  class="tab-body active">
+                            teste 1
+        
+                        </div>
+                        
+                        <div id="media" name="media" class="tab-body col s12">
+                                teste 2
+                        </div>
+                            
+                        <div id="dictation" name="dictation" class="tab-body col s12">
+                                teste 3
+                        </div> 
+                        
+                        <div id="speech"  name="speech" class="tab-body col s12">
+                                teste 4
+                        </div>                 
+                    </div>
+                </div> 
     </div>
+
 
     <!--<script src="js/jquery-3.1.1.min.js"></script>
     <script src="js/jquery.mask.min.js"></script> -->
