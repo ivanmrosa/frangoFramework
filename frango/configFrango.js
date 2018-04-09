@@ -1,6 +1,5 @@
 frango.config.initialConfiguration(function(){
-    frango.config.isBuildingOfflineApp = false;
-    frango.config.isRuningInWeb = true;
-    frango.server.crossDomain = false;
+    frango.config.isRuningInWeb = false;
+    frango.server.crossDomain = true;
     frango.server.host_url = '';
 });

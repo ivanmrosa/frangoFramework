@@ -1128,6 +1128,8 @@ frango.server = {}
 
 frango.server.authorization = undefined;
 
+frango.server.persistentHeaders = {};
+
 frango.server.host_url = undefined;
 
 frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, useAuthorization, requestMethod) {
@@ -1169,9 +1171,9 @@ frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, us
         try {
             if (xhttp.readyState == 4) {
                 if (xhttp.status == 200 || xhttp.status == 201 || xhttp.status == 204) {
-                    routineOk(xhttp.responseText, xhttp.status);
+                    routineOk.call(null, xhttp.responseText, xhttp.status);
                 } else {
-                    routineNotOk(xhttp.responseText, xhttp.status);
+                    routineNotOk.call(null, xhttp.responseText, xhttp.status);
                 };
             };
         } catch (e) {
@@ -1202,9 +1204,19 @@ frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, us
     };
 
     if (objectHeader) {
-        for (var obj in objectHeader) {
-            xhttp.setRequestHeader(obj, objectHeader[obj]);
+        for (var obj in objectHeader) {            
+            if(objectHeader.hasOwnProperty(obj)){
+                xhttp.setRequestHeader(obj, objectHeader[obj]);
+            };            
         };
+    };
+
+    if(frango.server.persistentHeaders){
+        for (var obj in frango.server.persistentHeaders) {
+            if (frango.server.persistentHeaders.hasOwnProperty(obj)){
+                xhttp.setRequestHeader(obj, frango.server.persistentHeaders[obj]);
+            };            
+        };        
     };
 
     if (requestMethod != 'GET') {
@@ -1974,7 +1986,7 @@ function lookup(selector) {
             };
 
             var element = this;
-            frango.server.get(url, data, false).
+            frango.server.get(url, data, true).
                 onSuccess(function (data) {
 
                     dataJS = JSON.parse(data);

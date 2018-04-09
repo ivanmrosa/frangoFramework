@@ -22,16 +22,25 @@ host = '127.0.0.1'
 port = 8081
 server_address = (host, port)
 base_url = 'http://' + host + ':' + str(port)
-#dirjs = os.path.dirname(os.path.abspath(__file__)) + '/js'
+#base_dirjs = os.path.dirname(os.path.abspath(__file__)) + '/js'
 base_dir = os.getcwd()  #os.path.dirname(os.path.abspath(__file__))
-dirjs =  os.path.join(base_dir, 'js')
+base_dirjs =  os.path.join(base_dir, 'js')
+base_dircss =  os.path.join(base_dir, 'css')
 
+regex_debug_script = r'<!--begin script debugger-->.*<!--end script debugger-->'
+
+HTML_SIMPLE_TEMPLATE = \
+'''
+<div id="[[[COMPONENT_NAME]]]" class="[[[COMPONENT_NAME]]]">
+Component: [[[COMPONENT_NAME]]]
+</div>
+'''
 
 HTML_REUSABLE_TEMPLATE = \
 '''
-<div id="[{([[[COMPONENT_NAME]]]) id }]">
+<div id="[{([[[COMPONENT_NAME]]]) id }]" class="[[[COMPONENT_NAME]]]">
 Component: [[[COMPONENT_NAME]]]
-<div>
+</div>
 '''
 
 
@@ -63,8 +72,7 @@ CONTROLLER_COMPONENT_REUSABLE_JS = \
 function [[[COMPONENT_NAME]]]Class(instanceId) {
    //use htmlComponent.find() to access the child elements  
    var htmlComponent = frango.find('#' + instanceId);
-
-   /*write the component functionalites here*/
+      
 }
 
 
@@ -111,6 +119,15 @@ function [[[COMPONENT_NAME]]]Class(instanceId) {
 
 '''
 
+
+COMPONENT_CSS_TEMPLATE  = \
+'''
+/*always use the component class to select specific style roles - for general roles use app.css*/
+/*
+.[[[COMPONENT_NAME]]] .some_element {
+}
+*/
+'''
 
 ROUTES_FILE_TEMPLATE = \
 '''
@@ -227,7 +244,7 @@ class testHTTPServer_RequestHandler(SimpleHTTPRequestHandler):
         getting_template = self.headers["GETTEMPLATE"]
         path = 'app.html' if self.path == '/' else self.path[1:]
         
-        #building an single page application
+        #building a single page application
         pathSplited = path.split('/')
         if pathSplited[0] ==  'frango-framework-build-app':
             path = 'app.html'
@@ -257,18 +274,51 @@ class testHTTPServer_RequestHandler(SimpleHTTPRequestHandler):
         return
 
 
-def get_dependency_file(mode='r'):
-    return open(dirjs + '/js-dependency.json', mode)
+def get_dependency_js_file(mode='r'):
+    return open(os.path.join(base_dirjs, 'js-dependency.json'), mode)
+
+def get_dependency_css_file(mode='r'):
+    return open(os.path.join(base_dirjs, 'css-dependency.json'), mode)
 
 
 def get_js_dependency_files():
-    with get_dependency_file() as fconfig:
+    with get_dependency_js_file() as fconfig:
         files = json.loads(fconfig.read())
     return files["general-js"] + files["components-js"]
 
+def put_js_in_page(debugging = False):
+    script = ""
+    app_html = ""
+    if debugging:
+        files = get_js_dependency_files()
+    else:
+        files = ['js/js-centralizer.js']
+        
+
+    for path in files:
+        script += '  <script type="text/javascript" src="{0}"></script>\n'.format(path.replace('\\', '/'))        
+
+    script = '<!--begin script debugger-->\n' + script + '  <!--end script debugger-->'
+    
+    with open(os.path.join(base_dir, 'app.html'), 'r+') as f:
+        app_html = f.read()
+        app_html = re.sub(regex_debug_script, script, app_html, 0, re.DOTALL)
+        f.seek(0)
+        f.truncate()
+        f.seek(0)
+        f.write(app_html)    
+
+        
+
+
+def get_css_dependency_files():
+    with get_dependency_css_file() as fconfig:
+        files = json.loads(fconfig.read())
+    return files["general-css"] + files["components-css"]
+
 
 def create_centralizer_js():
-    centralizerjs = dirjs + '/js-centralizer.js'
+    centralizerjs = os.path.join(base_dirjs, 'js-centralizer.js')
 
     files = get_js_dependency_files()
 
@@ -285,17 +335,38 @@ def create_centralizer_js():
         raise Exception('compile failed.. ' + str(e))
 
 
+def create_centralizer_css():
+    centralizerjs = os.path.join(base_dircss, 'css-centralizer.css')
+
+    files = get_css_dependency_files()
+
+    fcentralize = open(centralizerjs, 'w')
+
+    try:
+        for fi in files:
+            with open(base_dir + '/' + fi, 'r') as fjs:
+                fcentralize.write('\n')
+                fcentralize.write(fjs.read())
+        fcentralize.close()
+    except Exception as e:
+        fcentralize.close()
+        raise Exception('compile failed.. ' + str(e))
+
 def put_routes_together():
     try:
-        component_path = os.path.join(base_dir, 'components')
+        #component_path = os.path.join(base_dir, 'components')
+        with open(os.path.join(base_dirjs, 'components-config.json'), 'r') as fcomponent:
+            component_config = json.loads(fcomponent.read())
+        
         route_app_file = open(os.path.join(
             base_dir, 'js', 'app-routes.js'), 'w')
         route_app_file.seek(0)
         
         new_routes = {}
 
-        for component_name in os.listdir(component_path):
-            component_folder = os.path.join(component_path, component_name)
+        for component_name in component_config:
+            relative_path = component_config[component_name]
+            component_folder = base_dir + relative_path
             if os.path.isdir(component_folder):
                 component_rote_json = os.path.join(
                     component_folder, component_name + '-route.json')
@@ -326,14 +397,24 @@ def check_modifications(thread_server):
         files = get_js_dependency_files()
         for fi in files:
             if file_modified(base_dir + '/' + fi):
-                compile()
+                compile(debugging=True)
+                break
+        files = get_css_dependency_files()
+        for fi in files:
+            if file_modified(base_dir + '/' + fi):
+                compile(debugging=True)
                 break
 
 
-def create_register_component(path, component_name):
+def create_register_component(path, component_name, container):
+    component_and_container = component_name
+    if container:
+        component_and_container =  container + '/' + component_name
+
+
     with open(os.path.join(path, component_name + '-register.js'), 'w') as f:
         f.write(REGISTER_COMPONENT_JS.replace(
-            "[[[COMPONENT_NAME]]]", component_name))
+            "[[[COMPONENT_NAME]]]", component_and_container))
 
 def create_controller_component(path, component_name, reusable):
         
@@ -351,45 +432,79 @@ def create_template_html_file(path, component_name, reusable):
     if reusable:
         template = HTML_REUSABLE_TEMPLATE.replace("[[[COMPONENT_NAME]]]", component_name)
     else:
-        template = 'Component ' + component_name
+        template = HTML_SIMPLE_TEMPLATE.replace("[[[COMPONENT_NAME]]]", component_name)
     
     f = open(os.path.join(path, component_name + '.html'), 'w')
     f.write(template)
     f.close()
 
+
+def create_template_css_file(path, component_name):
+    template = COMPONENT_CSS_TEMPLATE.replace("[[[COMPONENT_NAME]]]", component_name)        
+    f = open(os.path.join(path, component_name + '.css'), 'w')
+    f.write(template)
+    f.close()    
+
+
 def insert_js_dependency(path, component_name):
-    with get_dependency_file(mode='r+') as f:
+    relative_path = path.replace(base_dir, '')
+    with get_dependency_js_file(mode='r+') as f:
         config = json.loads(f.read())
-        config["components-js"].append('components/' + component_name +
-                                       '/js/' + component_name + '-register.js')
-        config["components-js"].append('components/' +
-                                       component_name + '/js/' + component_name + '.js')
+        config["components-js"].append(os.path.join(relative_path, component_name + '-register.js'))
+        config["components-js"].append(os.path.join(relative_path, component_name + '.js'))
         f.seek(0)
         f.write(json.dumps(config, indent=4))
         f.truncate()
 
+def insert_css_dependency(path, component_name):    
+    relative_path = path.replace(base_dir, '')    
+    with get_dependency_css_file(mode='r+') as f:
+        config = json.loads(f.read())
+        config["components-css"].append(os.path.join(relative_path, component_name + '.css'))
+        f.seek(0)
+        f.write(json.dumps(config, indent=4))
+        f.truncate()
+
+def delete_component_config(component_name):
+    fcomponent = open(os.path.join(base_dirjs, 'components-config.json'), 'r+')
+    component_config = json.loads(fcomponent.read())
+    fcomponent.close()
+    del component_config[component_name]
+
+
 def delete_js_dependency(path, component_name):
-    with get_dependency_file(mode='r+') as f:
+    relative_path = path.replace(base_dir, '')    
+    with get_dependency_js_file(mode='r+') as f:
         config = json.loads(f.read())
         try:
-            config["components-js"].remove('components/' + component_name +
-                                        '/js/' + component_name + '-register.js')
-            config["components-js"].remove('components/' +
-                                        component_name + '/js/' + component_name + '.js')
-        except ValueError as e:
+            config["components-js"].remove(os.path.join(relative_path, component_name + '-register.js'))
+            config["components-js"].remove(os.path.join(relative_path, component_name + '.js'))
+        except ValueError:
             pass
 
         f.seek(0)
         f.write(json.dumps(config, indent=4))
         f.truncate()
     
+def delete_css_dependency(path, component_name):
+    relative_path = path.replace(base_dir, '')    
+    with get_dependency_css_file(mode='r+') as f:
+        config = json.loads(f.read())
+        try:
+            config["components-css"].remove(os.path.join(relative_path, component_name + '.css'))
+        except ValueError:
+            pass
 
+        f.seek(0)
+        f.write(json.dumps(config, indent=4))
+        f.truncate()
+    
 def create_component_route(path, component_name):
     try:
         f = open(os.path.join(path, component_name + '-route.json'), 'w')
         f.write(ROUTE_COMPONENT_JSON_TEMPLANTE.replace('[[[COMPONENT_NAME]]]', component_name))
         f.close()
-    except Exception as e:
+    except Exception:
         f.close()
         raise
 
@@ -400,55 +515,99 @@ def validade_component_name(component_name):
         raise Exception('You cannot use ' + regex + ' keys in component name')
     #findall(regex, text, re.DOTALL)
 
+def create_container(container_name):
+    os.makedirs(os.path.join(base_dir, 'components', container_name))
+
+
 def create_component(component_name, reusable):
-    validade_component_name(component_name)
-    component_directory = os.path.join(base_dir, 'components', component_name)
+    validade_component_name(component_name)    
+    container_name = input('Type the container name this component belongs to or leave blank... ')
+    container_name = container_name.strip()
+    if container_name:
+        if os.path.isdir(os.path.join(base_dir, 'components', container_name)):
+            component_directory = os.path.join(base_dir, 'components', container_name, component_name)            
+        else:
+            raise Exception('Invalid container. Type a existent container name')
+    else:    
+        component_directory = os.path.join(base_dir, 'components', component_name)        
+    
     cjsdir = os.path.join(component_directory, 'js')
+    cssdir = os.path.join(component_directory, 'css')
     ctemplatedir = os.path.join(component_directory, 'template')
-    if os.path.exists(component_directory):
+    
+    
+    
+    fcomponent = open(os.path.join(base_dirjs, 'components-config.json'), 'r+')
+    component_config = json.loads(fcomponent.read())
+    if component_name in component_config:
         raise Exception('Component alredy exists')
+
     # root
     os.makedirs(component_directory)
     # js
     os.makedirs(cjsdir)
+    #css
+    os.makedirs(cssdir)
     # template
     os.makedirs(ctemplatedir)
     # register-component js file
-    create_register_component(cjsdir, component_name)
+    create_register_component(cjsdir, component_name, container_name)
     # controller js file
     create_controller_component(cjsdir, component_name, reusable)
     # template-component html file
     create_template_html_file(ctemplatedir, component_name, reusable)
+    # template-component css file
+    create_template_css_file(cssdir, component_name)
     # insert js on js-dependency
     insert_js_dependency(cjsdir, component_name)
+    # insert cs on css-dependency
+    insert_css_dependency(cssdir, component_name)
     #insert file component-route.json
     create_component_route(component_directory, component_name)
-
+    component_config.update({component_name: component_directory.replace(base_dir, '')})
+    fcomponent.seek(0)
+    fcomponent.write(json.dumps(component_config, indent = 4))
+    fcomponent.close()
+    
+        
 
 def delete_component(component_name):
-    print('Do you realy want to remove the component ' + component_name + '? ')
+    container_name = input('Type the container name this component belongs to or leave blank... ')
+    container_name = container_name.strip()
+
+    if container_name:
+        if os.path.isdir(os.path.join(base_dir, 'components', container_name)):
+            component_directory = os.path.join(base_dir, 'components', container_name, component_name)
+        else:
+            raise Exception('Invalid container. Type a existent container name')
+    else:    
+        component_directory = os.path.join(base_dir, 'components', component_name)
+
+
+    print('Do you realy want to remove the component ' + component_directory + '? ')
     response = input('Please enter y/n ')
     if not response in ['y', 'n']:
         raise Exception('Argument not recognized')
 
-    if response == 'y':
-        component_directory = os.path.join(base_dir, 'components', component_name)
+    if response == 'y':        
         cjsdir = os.path.join(component_directory, 'js')
+        cssdir = os.path.join(component_directory, 'css')
         delete_js_dependency(cjsdir, component_name)
+        delete_css_dependency(cssdir, component_name)
+        delete_component_config(component_name)
         shutil.rmtree(component_directory)
 
 
-def compile():
+def compile(debugging = False):
     print('compiling...')
-
-    #try:
+   
     create_centralizer_js()
+    put_js_in_page(debugging)
+            
+    create_centralizer_css()
     put_routes_together()
-    #except Exception as e:
-    #    raise Exception('compile failed.. ' + str(e))
-
+ 
     print('compiled...')
-
 
 
 def kbfunc():
@@ -481,8 +640,8 @@ class HTTPServerBreak(HTTPServer):
         if x == 4: # Ctrl-D            
             raise KeyboardInterrupt('Execution interrupted by user.')        
 
-def serve():
-    compile()
+def serve(debugging = False):
+    compile(debugging)
     print('starting server...')
     httpd = HTTPServerBreak(server_address, testHTTPServer_RequestHandler)
     print('running server at ' + base_url + '...')
@@ -497,12 +656,13 @@ def serve():
     raise Exception('Server closed by user.')
     
 
-def run_serve():
-    th_server = threading.Thread(target=serve)
+def run_serve(debugging = False):
+    th_server = threading.Thread(target=serve, args=(debugging,))
     th_check_file = threading.Thread(
         target=check_modifications, args=(th_server,))
     th_server.start()
-    th_check_file.start()
+    if debugging:
+        th_check_file.start()
 
 
 def build(): 
@@ -571,7 +731,7 @@ def run():
     if command == 'compile' or command == 'cp':
         compile()
     elif command == 'serve' or command == 'sv':
-        run_serve()
+        run_serve(debugging=True)
     elif command == 'createcomponent' or command == 'cc':
         component_name = sys.argv[2]
         reusable = False
@@ -587,6 +747,9 @@ def run():
         build()
     elif command == 'createproject' or command == 'cp':
         create_project()
+    elif command == 'createcontainer' or command == 'ccn':
+        container_name = sys.argv[2]
+        create_container(container_name)
     else:
       raise Exception('Nothing defined for ' + command + ' command')
 
