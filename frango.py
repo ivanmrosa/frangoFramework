@@ -48,7 +48,7 @@ REGISTER_COMPONENT_JS = \
 '''
 app.components.push(function () {
     frango.component('[[[COMPONENT_NAME]]]').
-        setPathLocalTemplate('components/[[[COMPONENT_NAME]]]/template/[[[COMPONENT_NAME]]].html').
+        setPathLocalTemplate('components/[[[CONTAINER_NAME]]][[[COMPONENT_NAME]]]/template/[[[COMPONENT_NAME]]].html').
         objectGetData([[[COMPONENT_NAME]]]Component).
         controller([[[COMPONENT_NAME]]]Component.controller).
         register()
@@ -407,14 +407,16 @@ def check_modifications(thread_server):
 
 
 def create_register_component(path, component_name, container):
-    component_and_container = component_name
+    container_and_slash = container
     if container:
-        component_and_container =  container + '/' + component_name
+        container_and_slash += "/" 
+    else:
+        container_and_slash = ""
 
 
     with open(os.path.join(path, component_name + '-register.js'), 'w') as f:
         f.write(REGISTER_COMPONENT_JS.replace(
-            "[[[COMPONENT_NAME]]]", component_and_container))
+            "[[[COMPONENT_NAME]]]", component_name).replace('[[[CONTAINER_NAME]]]', container_and_slash) )
 
 def create_controller_component(path, component_name, reusable):
         
@@ -468,8 +470,12 @@ def insert_css_dependency(path, component_name):
 def delete_component_config(component_name):
     fcomponent = open(os.path.join(base_dirjs, 'components-config.json'), 'r+')
     component_config = json.loads(fcomponent.read())
-    fcomponent.close()
     del component_config[component_name]
+    fcomponent.seek(0)
+    fcomponent.write(json.dumps(component_config, indent=4))
+    fcomponent.truncate()
+    fcomponent.close()
+    
 
 
 def delete_js_dependency(path, component_name):
