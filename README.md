@@ -11,7 +11,7 @@ The framework has a client made with python3 to:
 - Provide a local server to run the project;
 - Build a SPA.
 
-Installation structure to frangoFramework
+## Installation structure to frangoFramework
 
 To install frangoFramework, follow this steps:
 
