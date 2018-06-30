@@ -20,6 +20,7 @@ function csrfSafeMethod(method) {
     return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
 
+
 Function.prototype.clone = function () {
     var that = this;
     var temp = function temporary() { return that.apply(this, arguments); };
@@ -30,6 +31,57 @@ Function.prototype.clone = function () {
     }
     return temp;
 };
+
+function Polyfill(scope) {
+
+
+    if (!Array.prototype.findIndex) {
+        Array.prototype.findIndex = function (predicate) {
+            if (this === null) {
+                throw new TypeError('Array.prototype.findIndex called on null or undefined');
+            }
+            if (typeof predicate !== 'function') {
+                throw new TypeError('predicate must be a function');
+            }
+            var list = Object(this);
+            var length = list.length >>> 0;
+            var thisArg = arguments[1];
+            var value;
+
+            for (var i = 0; i < length; i++) {
+                value = list[i];
+                if (predicate.call(thisArg, value, i, list)) {
+                    return i;
+                }
+            }
+            return -1;
+        };
+    };
+    if (!Array.prototype.find) {
+        Array.prototype.find = function (predicate) {
+            if (this === null) {
+                throw new TypeError('Array.prototype.find called on null or undefined');
+            }
+            if (typeof predicate !== 'function') {
+                throw new TypeError('predicate must be a function');
+            }
+            var list = Object(this);
+            var length = list.length >>> 0;
+            var thisArg = arguments[1];
+            var value;
+
+            for (var i = 0; i < length; i++) {
+                value = list[i];
+                if (predicate.call(thisArg, value, i, list)) {
+                    return value;
+                }
+            }
+            return undefined;
+        };
+    }
+} (this);
+
+
 
 
 
@@ -130,8 +182,10 @@ frango.removeClass = function (cl, element) {
 
 }
 
-frango.replace = function (str, strToReplace, strReplaceTo) {
-
+frango.replace = function (str, strToReplace, strReplaceTo, wholeWordsOnly = false) {
+    if(wholeWordsOnly){
+      strToReplace = '\\b' + strToReplace + '\\b';
+    };
     var reg = new RegExp(strToReplace, 'gi');
 
     return str.replace(reg, strReplaceTo);
@@ -415,7 +469,15 @@ frango.find = function (selector, parent) {
             frango.addHTML(this.elements[i], 'afterend', html);
         };
     };
-
+    
+    this.result.hasClass = function(cl){
+       var ele = this.elements[0];
+       if(ele){
+          return frango.hasClass(cl, ele);
+       }else{
+          return ele;
+       };
+    };
 
     this.result.elements = this.foundElements;
 
@@ -976,9 +1038,31 @@ frango.tab = function (selector, touchEnabled) {
         });
     };
 
+    var configureEventChangeTab = function (pageControl) {
+        /*event*/
+        var eventChange = document.createEvent('Event');
+        eventChange.initEvent('changeTab', true, true);
+        var identifier = setInterval(function () {
+            var tabActive = pageControl.find('.tab.active').attr('data-body');
+            if (!tabActive) {
+                clearInterval(identifier);
+            };
+            var lastActive = pageControl.attr('data-last-active');
+            if (!lastActive) {
+                pageControl.attr('data-last-active', tabActive);
+            } else {
+                if (lastActive != tabActive) {
+                    pageControl.attr('data-last-active', tabActive);
+                    pageControl.dispatchEvent(eventChange);
+                };
+            };
+        }, 300)
+    };
+
     var configurePageControls = function (resizing) {
         var pgcSelector = selector || '.page-control';
         frango.find(pgcSelector).loop(function () {
+
             var pageControl = this;
             var paretElWidth = pageControl.parentElement.offsetWidth;
 
@@ -999,12 +1083,16 @@ frango.tab = function (selector, touchEnabled) {
                 };
 
             };
+
+            configureEventChangeTab(pageControl);
         });
     };
     frango.find(window).on('resize', function () {
         configurePageControls(true);
     });
     configurePageControls(false);
+
+
 }
 
 
@@ -1132,12 +1220,36 @@ frango.server.persistentHeaders = {};
 
 frango.server.host_url = undefined;
 
-frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, useAuthorization, requestMethod) {
+frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, useAuthorization, requestMethod, contentType) {
     var newUrl = url;
     var result = {};
-    var routineOk;
-    var routineNotOk;
+    var routineOk = undefined;
+    var routineNotOk = undefined;
     var finalData = "";
+    if (!objectHeader) {
+        objectHeader = {};
+    };
+    switch (contentType) {
+        case "application/json":
+            objectHeader["Accept"] = "application/json, text/javascript";
+            break;
+        case "json":
+            objectHeader["Accept"] = "application/json, text/javascript";
+            contentType = "application/json";
+            break;
+        case "application/xml":
+            objectHeader["Accept"] = "application/xml, text/xml";
+            break;
+        case "text/html":
+            objectHeader["Accept"] = "text/html";
+        case "text/plain ":
+            objectHeader["Accept"] = "text/plain";
+        default:
+            //objectHeader["Accept"] = "*";
+            break;
+    };
+
+    var hasContentypeOnHeader = (contentType != undefined && contentType != null && contentType != "");
     if (useFrangoHost === undefined || useFrangoHost == null) {
         useFrangoHost = true;
     };
@@ -1171,19 +1283,20 @@ frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, us
         try {
             if (xhttp.readyState == 4) {
                 if (xhttp.status == 200 || xhttp.status == 201 || xhttp.status == 204) {
-                    routineOk.call(null, xhttp.responseText, xhttp.status);
+                    routineOk(xhttp.responseText, xhttp.status);
                 } else {
-                    routineNotOk.call(null, xhttp.responseText, xhttp.status);
+                    routineNotOk(xhttp.responseText, xhttp.status);
                 };
             };
         } catch (e) {
             frango.wait.stop(undefined, true);
             frango.warning('An error has ocurred. </br>' + e);
+            throw e;
         };
     };
 
     if (data) {
-        if (typeof data === 'object') {
+        if (typeof data === 'object' && (hasContentypeOnHeader === false || requestMethod == 'GET')) {
             for (var key in data) {
                 if (data.hasOwnProperty(key)) {
                     finalData += key + "=" + data[key] + "&";
@@ -1195,7 +1308,6 @@ frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, us
         };
     };
 
-
     if (finalData != "" && requestMethod == 'GET') {
         xhttp.open(requestMethod, newUrl + '?' + finalData, async);
     } else {
@@ -1203,24 +1315,30 @@ frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, us
         xhttp.open(requestMethod, newUrl, async);
     };
 
+
     if (objectHeader) {
-        for (var obj in objectHeader) {            
-            if(objectHeader.hasOwnProperty(obj)){
+        for (var obj in objectHeader) {
+            if (objectHeader.hasOwnProperty(obj)) {
                 xhttp.setRequestHeader(obj, objectHeader[obj]);
-            };            
+            };
         };
     };
 
-    if(frango.server.persistentHeaders){
+    if (frango.server.persistentHeaders) {
         for (var obj in frango.server.persistentHeaders) {
-            if (frango.server.persistentHeaders.hasOwnProperty(obj)){
+            if (frango.server.persistentHeaders.hasOwnProperty(obj)) {
                 xhttp.setRequestHeader(obj, frango.server.persistentHeaders[obj]);
-            };            
-        };        
+            };
+        };
     };
 
     if (requestMethod != 'GET') {
-        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        if (hasContentypeOnHeader === true) {
+            xhttp.setRequestHeader("Content-Type", contentType);
+        } else {
+            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        };
+
         if (!csrfSafeMethod(requestMethod) && !this.crossDomain) {
             xhttp.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
         };
@@ -1230,6 +1348,7 @@ frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, us
         xhttp.setRequestHeader('Authorization', frango.server.authorization);
     };
 
+
     try {
         if (requestMethod != 'GET' && finalData != "") {
             xhttp.send(finalData);
@@ -1237,28 +1356,28 @@ frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, us
             xhttp.send();
         };
     } catch (e) {
-        frango.wait.stop(undefined, true);
-        frango.warning(e.description);
+        frango.wait.stop();
+        frango.warning(e.toString());
     };
 
     return result;
 };
 
 
-frango.server.put = function (url, data, async, objectHeader, useFrangoHost, useAuthorization) {
-    return frango.server.ajax(url, data, async, objectHeader, useFrangoHost, useAuthorization, 'PUT');
+frango.server.put = function (url, data, async, objectHeader, useFrangoHost, useAuthorization, contentType) {
+    return frango.server.ajax(url, data, async, objectHeader, useFrangoHost, useAuthorization, 'PUT', contentType);
 };
 
-frango.server.post = function (url, data, async, objectHeader, useFrangoHost, useAuthorization) {
-    return frango.server.ajax(url, data, async, objectHeader, useFrangoHost, useAuthorization, 'POST');
+frango.server.post = function (url, data, async, objectHeader, useFrangoHost, useAuthorization, contentType) {
+    return frango.server.ajax(url, data, async, objectHeader, useFrangoHost, useAuthorization, 'POST', contentType);
 };
 
-frango.server.get = function (url, data, async, objectHeader, useFrangoHost, useAuthorization) {
-    return frango.server.ajax(url, data, async, objectHeader, useFrangoHost, useAuthorization, 'GET');
+frango.server.get = function (url, data, async, objectHeader, useFrangoHost, useAuthorization, contentType) {
+    return frango.server.ajax(url, data, async, objectHeader, useFrangoHost, useAuthorization, 'GET', contentType);
 };
 
-frango.server.delete = function (url, data, async, objectHeader, useFrangoHost, useAuthorization) {
-    return frango.server.ajax(url, data, async, objectHeader, useFrangoHost, useAuthorization, 'DELETE');
+frango.server.delete = function (url, data, async, objectHeader, useFrangoHost, useAuthorization, contentType) {
+    return frango.server.ajax(url, data, async, objectHeader, useFrangoHost, useAuthorization, 'DELETE', contentType);
 };
 
 frango.ajax = function (objectParams, requestMethod) {
@@ -1270,13 +1389,14 @@ frango.ajax = function (objectParams, requestMethod) {
     var useAuthorization = objectParams["useAuthorization"];
     var onSuccess = objectParams["onSuccess"];
     var onFailure = objectParams["onFailure"]
-    frango.server.ajax(url, data, async, objectHeader, useFrangoHost, useAuthorization, requestMethod).onSuccess(function (data) {
+    var contentType = objectParams["contentType"]
+    frango.server.ajax(url, data, async, objectHeader, useFrangoHost, useAuthorization, requestMethod, contentType).onSuccess(function (data, status) {
         if (onSuccess) {
-            onSuccess(data);
+            onSuccess(data, status);
         };
-    }).onFailure(function (data) {
+    }).onFailure(function (data, status) {
         if (onFailure) {
-            onFailure(data);
+            onFailure(data, status);
         };
     });
 }
@@ -1311,7 +1431,13 @@ frango.templatesFunctions.lower = function (value) {
 frango.templatesFunctions.replace = function (value, params) {
     to_be_replaced = params[0];
     replace_to = params[1];
-    return value.replace(to_be_replaced, replace_to);
+    return  frango.replace(value, to_be_replaced, replace_to);
+};
+
+frango.templatesFunctions.replaceWholeWord = function (value, params) {
+    to_be_replaced = params[0];
+    replace_to = params[1];
+    return  frango.replace(value, to_be_replaced, replace_to, true);
 };
 
 
@@ -1509,16 +1635,44 @@ frango.formParserJson = function (selector) {
     var data = "{";
     for (var i = 0; i < frm.length; i++) {
         var ele = frm[i];
-
+        var value = "";
+        var valueAsObject = ele.hasAttribute('data-value-as-object');
+        var name = ele.getAttribute("name").toString();
         if (ele.type === "checkbox") {
-            data += '"' + ele.getAttribute("name").toString() + '":"' + ele.checked.toString() + '",';
+            value = ele.checked.toString();
+            //data += '"' + ele.getAttribute("name").toString() + '":"' + ele.checked.toString() + '",';
         } else {
-            data += '"' + ele.getAttribute("name").toString() + '":"' + ele.value.toString() + '",';
-        }
+            value = ele.value.toString();
+            //data += '"' + ele.getAttribute("name").toString() + '":"' + ele.value.toString() + '",';
+        };
+        if (valueAsObject) {
+            var lookupField = frango.find(ele).attr("data-lookup-field");
+            value = "{" + '"' + lookupField + '"' + ":" + '"' + value + '"' + "}";
+            data += '"' + name + '":' + value + ',';
+        } else {
+            data += '"' + name + '":"' + value + '",';
+        };
+
     }
 
     return JSON.parse(data.substr(0, data.length - 1) + "}");
 }
+
+
+frango.bindDataObjectOnForm = function (selector, data) {
+    if (Object.keys(data).length == 0) {
+        return;
+    };
+
+    var elements = frango.find(selector).first().elements;
+    for (var index = 0; index < elements.length; index++) {
+        var element = elements[index];
+        //item[element.name] = element.selectedOptions[0].text;
+        if (element.name in data) {
+            element.value = data[element.name];
+        };
+    };
+};
 
 
 frango.bindServerDataOnTemplate = function (url, model, parent, request_params, execute) {
@@ -1645,7 +1799,7 @@ frango.getTemplate = function (templateName) {
 
                         clearInterval(frango.templatesToGet[templateName].timeout);
                         delete frango.templatesToGet[templateName];
-                        frango.freeToGetTemplate = true;                        
+                        frango.freeToGetTemplate = true;
 
                     }).
                     onFailure(function (data) {
@@ -1825,7 +1979,7 @@ frango.useConfigComponent = function (configComponentName, newPlaceSelector, obj
 
                         if (templates.length == 0) {
                             tempDoc.body.insertAdjacentHTML('beforeend',
-                                frango.find('[data-datasetname="' + configComponentName + '"]').elements[0].innerHTML);
+                                frango.find('style[data-datasetname="' + configComponentName + '"]').elements[0].innerHTML);
 
                             removeTemplate(configComponentName, tempDoc);
                         };
@@ -1955,24 +2109,34 @@ frango.useConfigComponentDataUrl = function (configComponentName, newPlaceSelect
 
 frango.fillLookupWaitting = false;
 
-function lookup(selector) {
+function lookup(selector, force, onFilled) {
     frango.find(selector).loop(function () {
         frango.fillLookupWaitting = true;
-        this.removeAttribute('data-filled');
+        var filled = this.hasAttribute('data-filled');
+        if (filled) {
+            if (force === true) {
+                this.removeAttribute('data-filled');
+                this.find('options').remove();
+            } else {
+                return;
+            };
+        };
+
         var url = this.getAttribute('data-lookup-url');
         if (url) {
             var master_val;
             var master_field_name;
-            var data = "";
+            var data = undefined;
             var field_name_value = this.getAttribute('data-lookup-field');
             var field_name_text = this.getAttribute('data-lookup-field2');
+            var contentType = this.getAttribute('data-content-type');
 
             if (this.getAttribute('data-lookup-master')) {
 
                 var parent = frango.find(this.getAttribute('data-lookup-master')).fisrt();
                 master_val = parent.value;
                 master_field_name = this.getAttribute('data-lookup-master-field');
-                data = master_field_name + '=' + master_val;
+                data[master_field_name] = master_val;
 
                 if (!parent.getAttribute('data-lookup-event-setted')) {
                     parent.addEventListener('change', function () {
@@ -1983,18 +2147,27 @@ function lookup(selector) {
                     }, true);
                 };
 
+                if (contentType == 'json' || contentType == 'application/json') {
+                    data = JSON.stringify(data);
+                    contentType = 'application/json';
+                };
+            } else {
+                if (contentType == 'json' || contentType == 'application/json') {
+                    data = '{}';
+                };
             };
-
             var element = this;
-            frango.server.get(url, data, true).
+            frango.server.get(url, data, true, undefined, undefined, undefined, contentType).
                 onSuccess(function (data) {
 
                     dataJS = JSON.parse(data);
-                    var html = "<option value=''></option>";
-                    element.innerHTML = html;
+                    var html = "";//"<option value=''></option>";
+                    //element.innerHTML = html;
                     for (var row in dataJS) {
-                        html += '<option value="' + dataJS[row][field_name_value] + '">' +
-                            dataJS[row][field_name_text] + '</option>';
+                        if (dataJS.hasOwnProperty(row)) {
+                            html += '<option value="' + dataJS[row][field_name_value] + '">' +
+                                dataJS[row][field_name_text] + '</option>';
+                        };
                     };
 
                     element.insertAdjacentHTML('beforeend', html);
@@ -2005,6 +2178,10 @@ function lookup(selector) {
 
                     element.setAttribute('data-filled', 'true');
                     frango.fillLookupWaitting = false;
+
+                    if (typeof onFilled == 'function') {
+                        onFilled();
+                    };
 
                 }).
                 onFailure(function (data) {
@@ -2018,8 +2195,8 @@ function lookup(selector) {
     });
 }
 
-frango.fillLookup = function (selector) {
-    lookup(selector);
+frango.fillLookup = function (selector, onFilled) {
+    lookup(selector, false, onFilled);
 }
 
 frango.autoComplete = function () {
@@ -2231,6 +2408,23 @@ frango.invisibleWhen = function (ele, condition) {
 
 }
 
+frango.currentDate = function(){
+    var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth()+1; //January is 0!
+    
+    var yyyy = today.getFullYear();
+    if(dd<10){
+        dd='0'+dd;
+    } 
+    if(mm<10){
+        mm='0'+mm;
+    } 
+    var today = yyyy + '-' + mm + '-' + dd ;
+    
+    return today;
+}
+
 frango.getRemoteDataset = function (datasetName, url, params, methodModifyData) {
     result = {};
     result.execute = function (method) {
@@ -2438,7 +2632,7 @@ frango.config.component = function (templateName, component) {
             frango.getTemplate(templateName).onSuccess(function () {
                 if (executeOnFinish) {
                     executeOnFinish();
-                    frango.removeTemplateFromBag(templateName);                    
+                    frango.removeTemplateFromBag(templateName);
                 };
             });
         };
@@ -2734,13 +2928,13 @@ function runLoadApp() {
         }, 300);
     };
 
-    if (frango.config.isBuildingOfflineApp === true){
-        var idTimeoutBuild = setInterval(function () {            
+    if (frango.config.isBuildingOfflineApp === true) {
+        var idTimeoutBuild = setInterval(function () {
             if (Object.keys(frango.templatesToGet).length === 0) {
-                clearInterval(idTimeoutBuild);      
+                clearInterval(idTimeoutBuild);
                 frango.find('body').adCl('frango-built');
             };
-        }, 400);            
+        }, 400);
     };
 
 };

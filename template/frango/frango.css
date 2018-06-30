@@ -356,6 +356,7 @@
   height: 85%;
   overflow-y: auto;
   left: 0;   
+
 }
 
 .popup .fixed-bottom {
@@ -364,6 +365,7 @@
   height: 15%;
   top: 85%;
   left: 0;
+  margin: 0;  
 }
 
 .tree-view ul li{
