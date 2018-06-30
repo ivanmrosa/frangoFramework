@@ -21,7 +21,7 @@ Install selenium with the command: pip install -U selenium
 Clone or download this project
 Add the cloned folder to PATH sytem variable
 
-The client has this commands:
+## The client has this commands:
  - frango.py createproject 
    Creates a new project.
  - frango.py createcontainer
@@ -36,7 +36,8 @@ The client has this commands:
    Runs a local server at http://localhost:8081
  - frango.py build
   Builds a SPA to deploy
-  
+ 
+ ## JavaScript helpers
  The frango.js file contains a lot of functions to make your work easier. I will put a tutorial here sooner as possible.
  A simple example:
  
