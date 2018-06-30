@@ -11,7 +11,17 @@ The framework has a client made with python3 to:
 - Provide a local server to run the project;
 - Build a SPA.
 
-The client has this commands:
+## Installation structure to frangoFramework
+
+To install frangoFramework, follow this steps:
+
+Install python3
+Install firefox browser
+Install selenium with the command: pip install -U selenium
+Clone or download this project
+Add the cloned folder to PATH sytem variable
+
+## The client has this commands:
  - frango.py createproject 
    Creates a new project.
  - frango.py createcontainer
@@ -26,7 +36,8 @@ The client has this commands:
    Runs a local server at http://localhost:8081
  - frango.py build
   Builds a SPA to deploy
-  
+ 
+ ## JavaScript helpers
  The frango.js file contains a lot of functions to make your work easier. I will put a tutorial here sooner as possible.
  A simple example:
  
@@ -60,4 +71,4 @@ The client has this commands:
  
  To more complex examples, look at https://github.com/ivanmrosa/myLanguages-client
  
- To install frangoFramework, look at https://github.com/ivanmrosa/frangoFramework-Installation
+
