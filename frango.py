@@ -16,7 +16,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait # available since 2.4.0
 from selenium.webdriver.support import expected_conditions as EC # available since 2.26.0
 from selenium.common.exceptions import NoSuchElementException
-import msvcrt
+try:
+    import msvcrt
+    has_msvcrt = True
+except:
+    has_msvcrt = False
 
 host = '127.0.0.1'
 port = 8081
@@ -617,14 +621,19 @@ def compile(debugging = False):
 
 
 def kbfunc():
-   x = msvcrt.kbhit()
-   if x:
-      ret = ord(msvcrt.getch())
-   else:
-      ret = 0
-   return ret
+    if not has_msvcrt:
+        return 0
+
+    x = msvcrt.kbhit()
+    if x:
+       ret = ord(msvcrt.getch())
+    else:
+       ret = 0
+    return ret
 
 def chek_key_press(server_class):    
+    if not has_msvcrt:
+        return
 
     while True:
         try:
@@ -651,7 +660,7 @@ def serve(debugging = False):
     print('starting server...')
     httpd = HTTPServerBreak(server_address, testHTTPServer_RequestHandler)
     print('running server at ' + base_url + '...')
-    print('press CTRL + D to stop')
+    print('To stop, press CTRL + D on windows or CTRL + C on UNIX based systems')
     # Server settings
     # Choose port 8080, for port 80, which is normally used for a http server, you need root access
     #  server_address = ('127.0.0.1', 8081)
