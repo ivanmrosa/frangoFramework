@@ -546,7 +546,6 @@ def create_component(component_name, reusable):
     ctemplatedir = os.path.join(component_directory, 'template')
     
     
-    
     fcomponent = open(os.path.join(base_dirjs, 'components-config.json'), 'r+')
     component_config = json.loads(fcomponent.read())
     if component_name in component_config:
