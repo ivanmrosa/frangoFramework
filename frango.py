@@ -698,6 +698,9 @@ def build():
     shutil.copytree(os.path.join(base_dir,'img'),os.path.join(bin_dir,'img'))
     shutil.copytree(os.path.join(base_dir,'js'),os.path.join(bin_dir,'js'))
     shutil.copytree(os.path.join(base_dir,'frango'),os.path.join(bin_dir,'frango'))
+    shutil.copy(os.path.join(base_dir, 'swregister.js'), bin_dir) 
+    shutil.copy(os.path.join(base_dir, 'service-worker.js'), bin_dir)     
+    shutil.copy(os.path.join(base_dir, 'manifest.json'), bin_dir)         
     
     browser = webdriver.Firefox()
     print('loading application..')

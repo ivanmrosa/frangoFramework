@@ -1,3 +1,14 @@
+body, html {
+  overflow-x: hidden;
+  width: 100%;
+  height: 100%;
+  padding: 0px;
+  margin: 0px;
+}
+
+
+
+
 .bck-white{
   background-color: white !important;
 }
@@ -50,6 +61,10 @@
    transition-delay: 0.5s;
 }
 
+
+.invisible {
+  display: none;
+}
 
 /*.menu.menu-full{
   border-right: 1px solid white;
@@ -188,6 +203,11 @@
     color : white;
 }
 
+.suspend{
+  float: left;
+  height:auto;
+  box-shadow: gray 0px 10px 10px 0px ;
+}
 
 .autocomplete{
   position: relative;
@@ -215,7 +235,7 @@
    margin : 0px;
    padding : 2px;
    max-height : 400px;
-   overflow : auto;
+   overflow : auto;   
 
 }
 
@@ -560,9 +580,10 @@
 
 }
 
-[data-datasetname]{
+[data-datasetname], [data-template-list-binded]{
   display:none !important;
 }
+
 
 .wait-body{
 	bottom: 0;
@@ -590,6 +611,64 @@
     animation: spin 2s linear infinite;
 
 }
+
+
+
+.hscroll{
+  float: left;
+  width: 98%;  
+  height: 150px; 
+  box-sizing: border-box;   
+  overflow: hidden;
+  margin: 5px;
+  position: relative;
+
+}
+
+.hscroll div {
+  box-sizing: border-box;
+}
+
+.hscroll > span {
+  font-weight: bold;
+  font-size: 30px;
+}
+
+
+
+.hscroll-group{  
+  position: absolute;
+  float: left;
+  /*margin-top: 5px;*/
+  margin: 0px;
+  padding: 0px;
+  height: 100px;
+  overflow-y: hidden;   
+  overflow-x: hidden;
+  width: 100%;
+      
+}
+
+.hscroll-item{
+  display: table;  
+  position: absolute;    
+  height: 100px;  /*  
+  overflow-x:hidden;  
+  overflow-y: auto;*/   
+  overflow-x: hidden;
+  width: 150px;  
+  padding: 5px;
+  border: 1px solid white;  
+  border-radius: 5px;  
+}
+
+.hscroll-item > span {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+  font-weight: bold;
+}
+
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
@@ -716,11 +795,6 @@
     .menu-full .menu-suspended li{
 	   height: 40px;
 	}
-
-	.header{
-	   display:none !important;
-	}
-
 
    .message, .errorlist{
 	    width: 100%;

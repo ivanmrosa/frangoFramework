@@ -5,22 +5,31 @@
   <title>Frango Framework</title>
   <meta charset="utf-8">
 
-
+  <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="frango/frango.css">
   <link rel="stylesheet" href="css/css-centralizer.css">
 
   <!--Let browser know website is optimized for mobile-->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="FrangoApp">
+  <link rel="apple-touch-icon" href="images/icons/icon-152x152.png">
+  <meta name="msapplication-TileImage" content="images/icons/icon-144x144.png">
+  <meta name="msapplication-TileColor" content="#2F3BA2">
+  <meta name="theme-color" content="#2F3BA2" />
+
 </head>
 
 <body>
-  <div id="app" class="container">
-
+  <noscript>Your browser does not support JavaScript!</noscript>
+  <div id="app" class="container">        
   </div>
 
   <script type="text/javascript" src="cordova.js"></script>
   <script type="text/javascript" src="frango/frango.js"></script>
   <script type="text/javascript" src="frango/configFrango.js"></script>
+  <script type="text/javascript" src="swregister.js"></script>
   <!--<script type="text/javascript" src="js/js-centralizer.js"></script> -->
 
   <!--do not erase or modify these comentaries-->

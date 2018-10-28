@@ -51,6 +51,10 @@
 }
 
 
+.invisible {
+  display: none;
+}
+
 /*.menu.menu-full{
   border-right: 1px solid white;
 
@@ -188,6 +192,11 @@
     color : white;
 }
 
+.suspend{
+  float: left;
+  height:auto;
+  box-shadow: gray 0px 10px 10px 0px ;
+}
 
 .autocomplete{
   position: relative;
@@ -215,7 +224,7 @@
    margin : 0px;
    padding : 2px;
    max-height : 400px;
-   overflow : auto;
+   overflow : auto;   
 
 }
 
@@ -356,6 +365,7 @@
   height: 85%;
   overflow-y: auto;
   left: 0;   
+
 }
 
 .popup .fixed-bottom {
@@ -715,11 +725,6 @@
     .menu-full .menu-suspended li{
 	   height: 40px;
 	}
-
-	.header{
-	   display:none !important;
-	}
-
 
    .message, .errorlist{
 	    width: 100%;
