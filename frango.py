@@ -33,12 +33,6 @@ base_dircss =  os.path.join(base_dir, 'css')
 
 regex_debug_script = r'<!--begin script debugger-->.*<!--end script debugger-->'
 
-HTML_SIMPLE_TEMPLATE = \
-'''
-<div id="[[[COMPONENT_NAME]]]" class="[[[COMPONENT_NAME]]]">
-Component: [[[COMPONENT_NAME]]]
-</div>
-'''
 
 HTML_REUSABLE_TEMPLATE = \
 '''
@@ -46,6 +40,8 @@ HTML_REUSABLE_TEMPLATE = \
 Component: [[[COMPONENT_NAME]]]
 </div>
 '''
+
+HTML_SIMPLE_TEMPLATE = HTML_REUSABLE_TEMPLATE
 
 
 REGISTER_COMPONENT_JS = \
@@ -61,67 +57,24 @@ app.components.push(function () {
 
 CONTROLLER_COMPONENT_JS = \
 '''
-[[[COMPONENT_NAME]]]Component = {
-    getData : function(){
-
-    },
-    controller: function(component){
-       component.bindData();
-    }
-}
-'''
-
-CONTROLLER_COMPONENT_REUSABLE_JS = \
-'''
-function [[[COMPONENT_NAME]]]Class(instanceId) {
-   //use htmlComponent.find() to access the child elements  
-   var htmlComponent = frango.find('#' + instanceId);
+function [[[COMPONENT_NAME]]]ControllerClass() {
       
-}
-
-
-[[[COMPONENT_NAME]]]Component = {
-
-    controller: function (component) {
-        //This implementation permites to create component by url route
-        var instanceID = component.componentID;
-        [[[COMPONENT_NAME]]]Component.getInitialData(instanceID, function(data){
-           component.bindData(data, true, function () {
-               /*on finish*/ 
-           });
-        });    
-
-    },
-    
-    getInitialData : function(componentID, callBack){
-        var dataTemplate = {
-           '[[[COMPONENT_NAME]]]': [{
-                id: componentID
-            }]
-         };
-         callBack(dataTemplate);
-       
-    },
-    
-    getInstance : function(componentID, methodToSendInstance){
-        //This implementation permites to create reusable component. The property data-auto-create in the component html must be setted to "no".
-        frango.useNestedComponent(componentID, function(){            
-            var component = frango.getComponent('[[[COMPONENT_NAME]]]');
-            var instanceID = component.componentID;
-            
-            [[[COMPONENT_NAME]]]Component.getInitialData(instanceID, function(data){
-                component.bindData(data, true, function () {
-		            var instance = new [[[COMPONENT_NAME]]]Class(componentID);
-                    if(methodToSendInstance){
-                       methodToSendInstance(instance);    
-                    };		            
-                });    
-            }); 
-        });
-    }
 };
 
+function [[[COMPONENT_NAME]]]ViewClass(instanceId, [[[COMPONENT_NAME]]]Controller) {   
+   var self = this;     
+   self.componentSelector = '#' + instanceId;
+   var htmlComponent = frango.find(self.componentSelector);
+   
+      
+};
+
+[[[COMPONENT_NAME]]]Component = frango.getComponentObject('[[[COMPONENT_NAME]]]', [[[COMPONENT_NAME]]]ViewClass,
+    [[[COMPONENT_NAME]]]ControllerClass);
 '''
+
+
+CONTROLLER_COMPONENT_REUSABLE_JS = CONTROLLER_COMPONENT_JS
 
 
 COMPONENT_CSS_TEMPLATE  = \
@@ -311,9 +264,7 @@ def put_js_in_page(debugging = False):
         f.truncate()
         f.seek(0)
         f.write(app_html)    
-
         
-
 
 def get_css_dependency_files():
     with get_dependency_css_file() as fconfig:
@@ -330,7 +281,7 @@ def create_centralizer_js():
 
     try:
         for fi in files:
-            with open(base_dir + '/' + fi, 'r') as fjs:
+            with open( os.path.join( base_dir, fi), 'r') as fjs:
                 fcentralize.write('\n')
                 fcentralize.write(fjs.read())
         fcentralize.close()
@@ -348,7 +299,7 @@ def create_centralizer_css():
 
     try:
         for fi in files:
-            with open(base_dir + '/' + fi, 'r') as fjs:
+            with open( os.path.join(base_dir, fi), 'r') as fjs:
                 fcentralize.write('\n')
                 fcentralize.write(fjs.read())
         fcentralize.close()
@@ -451,9 +402,15 @@ def create_template_css_file(path, component_name):
     f.write(template)
     f.close()    
 
+def get_relative_path(path):
+    relative =  path.replace(base_dir, '').replace('\\', '/')
+    if relative[0:1] in ['/', '\\']:
+        return relative[1:]
+    else:
+        return relative
 
 def insert_js_dependency(path, component_name):
-    relative_path = path.replace(base_dir, '')
+    relative_path = get_relative_path(path) #path.replace(base_dir, '')
     with get_dependency_js_file(mode='r+') as f:
         config = json.loads(f.read())
         config["components-js"].append(os.path.join(relative_path, component_name + '-register.js'))
@@ -463,7 +420,7 @@ def insert_js_dependency(path, component_name):
         f.truncate()
 
 def insert_css_dependency(path, component_name):    
-    relative_path = path.replace(base_dir, '')    
+    relative_path = get_relative_path(path)#path.replace(base_dir, '')    
     with get_dependency_css_file(mode='r+') as f:
         config = json.loads(f.read())
         config["components-css"].append(os.path.join(relative_path, component_name + '.css'))
@@ -480,10 +437,8 @@ def delete_component_config(component_name):
     fcomponent.truncate()
     fcomponent.close()
     
-
-
 def delete_js_dependency(path, component_name):
-    relative_path = path.replace(base_dir, '')    
+    relative_path = get_relative_path(path)#path.replace(base_dir, '')    
     with get_dependency_js_file(mode='r+') as f:
         config = json.loads(f.read())
         try:
@@ -497,7 +452,7 @@ def delete_js_dependency(path, component_name):
         f.truncate()
     
 def delete_css_dependency(path, component_name):
-    relative_path = path.replace(base_dir, '')    
+    relative_path = get_relative_path(path)#path.replace(base_dir, '')    
     with get_dependency_css_file(mode='r+') as f:
         config = json.loads(f.read())
         try:
@@ -527,7 +482,6 @@ def validade_component_name(component_name):
 
 def create_container(container_name):
     os.makedirs(os.path.join(base_dir, 'components', container_name))
-
 
 def create_component(component_name, reusable):
     validade_component_name(component_name)    
@@ -577,9 +531,7 @@ def create_component(component_name, reusable):
     fcomponent.seek(0)
     fcomponent.write(json.dumps(component_config, indent = 4))
     fcomponent.close()
-    
-        
-
+            
 def delete_component(component_name):
     container_name = input('Type the container name this component belongs to or leave blank... ')
     container_name = container_name.strip()
@@ -606,7 +558,6 @@ def delete_component(component_name):
         delete_component_config(component_name)
         shutil.rmtree(component_directory)
 
-
 def compile(debugging = False):
     print('compiling...')
    
@@ -617,7 +568,6 @@ def compile(debugging = False):
     put_routes_together()
  
     print('compiled...')
-
 
 def kbfunc():
     if not has_msvcrt:
@@ -706,9 +656,9 @@ def build():
     shutil.copytree(os.path.join(base_dir,'img'),os.path.join(bin_dir,'img'))
     shutil.copytree(os.path.join(base_dir,'js'),os.path.join(bin_dir,'js'))
     shutil.copytree(os.path.join(base_dir,'frango'),os.path.join(bin_dir,'frango'))
-    shutil.copy(os.path.join(base_dir, 'swregister.js'), bin_dir) 
-    shutil.copy(os.path.join(base_dir, 'service-worker.js'), bin_dir)     
-    shutil.copy(os.path.join(base_dir, 'manifest.json'), bin_dir)         
+    #shutil.copy(os.path.join(base_dir, 'swregister.js'), bin_dir) 
+    #shutil.copy(os.path.join(base_dir, 'service-worker.js'), bin_dir)     
+    #shutil.copy(os.path.join(base_dir, 'manifest.json'), bin_dir)         
     
     browser = webdriver.Firefox()
     print('loading application..')

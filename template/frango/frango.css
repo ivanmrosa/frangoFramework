@@ -1,14 +1,3 @@
-body, html {
-  overflow-x: hidden;
-  width: 100%;
-  height: 100%;
-  padding: 0px;
-  margin: 0px;
-}
-
-
-
-
 .bck-white{
   background-color: white !important;
 }
@@ -16,11 +5,6 @@ body, html {
 .bck-ghost{
   background-color: ghostwhite !important
 }
-
-.red{
-  color: red !important;
-}
-
 
 .align-justify{
   text-align: justify;
@@ -339,6 +323,46 @@ body, html {
   border-radius: 5px;
 }
 
+.popup.with-header .popup-body{
+  padding: 0px 0px 0px 0px !important;   
+}
+
+.popup.with-header .popup-body .popup-title ~ * {
+  margin-left: 5px !important;
+  margin-right: 5px !important;
+}
+.popup.with-header .popup-body .popup-title + * {
+  padding-top: 70px;
+}
+
+.popup.popup-show.with-header .popup-body .popup-title{
+  width: inherit;/*100%;*/
+  height: 70px;
+  padding-top: 17px;
+  background-color: #0082af;
+  color:white;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  text-transform: uppercase;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px; 
+  position: fixed;
+  /*top : 35px;*/
+  z-index: 1;
+  border-bottom: 1px solid white;
+}
+
+.popup.with-header .popup-body .popup-title .popup-close{
+  text-align: right;
+  position: absolute;
+  top: 2px;
+  right: 10px;
+  font-size: 20px;
+  cursor: pointer;
+  font-weight: normal;
+}
+
 .popup.full > .popup-body{
 	height:99% !important;
 	width:99% !important;
@@ -611,64 +635,6 @@ body, html {
     animation: spin 2s linear infinite;
 
 }
-
-
-
-.hscroll{
-  float: left;
-  width: 98%;  
-  height: 150px; 
-  box-sizing: border-box;   
-  overflow: hidden;
-  margin: 5px;
-  position: relative;
-
-}
-
-.hscroll div {
-  box-sizing: border-box;
-}
-
-.hscroll > span {
-  font-weight: bold;
-  font-size: 30px;
-}
-
-
-
-.hscroll-group{  
-  position: absolute;
-  float: left;
-  /*margin-top: 5px;*/
-  margin: 0px;
-  padding: 0px;
-  height: 100px;
-  overflow-y: hidden;   
-  overflow-x: hidden;
-  width: 100%;
-      
-}
-
-.hscroll-item{
-  display: table;  
-  position: absolute;    
-  height: 100px;  /*  
-  overflow-x:hidden;  
-  overflow-y: auto;*/   
-  overflow-x: hidden;
-  width: 150px;  
-  padding: 5px;
-  border: 1px solid white;  
-  border-radius: 5px;  
-}
-
-.hscroll-item > span {
-  display: table-cell;
-  vertical-align: middle;
-  text-align: center;
-  font-weight: bold;
-}
-
 
 @keyframes spin {
     0% { transform: rotate(0deg); }

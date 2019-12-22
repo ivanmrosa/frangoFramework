@@ -665,7 +665,7 @@ frango.popup.openPopup = function (select, executeAfter) {
 
     if (ele) {
         if (frango.find(ele).attr('data-popup-configured') != 'yes' &&
-            frango.find(ele).attr("data-automaticly-close") != "no") {
+            frango.find(ele).attr("data-automatically-close") != "no") {
             frango.find(ele).attr('data-popup-configured', 'yes');
             frango.find(ele).on('click', function (event) {
                 e = event || window.event;
@@ -677,6 +677,10 @@ frango.popup.openPopup = function (select, executeAfter) {
                 });
             });
         };
+
+        frango.find(ele).find('.popup-close').on('click', function(){
+            frango.popup.closePopup(select, executeAfter);
+        });
 
         frango.removeClass('popup-hide', ele);
         frango.addClass('popup-show', ele);
@@ -730,7 +734,7 @@ frango.warning = function (message, fnToExecuteAfter) {
     popupE.insertAdjacentHTML('beforeend', html);
 
     try {
-        document.querySelector('body').appendChild(popupE);
+        frango.find('body').first().appendChild(popupE);
     } catch (e) {
         console.log(e);
     };
@@ -758,7 +762,7 @@ frango.confirm = function (message, executeIfTrue, executeIfFalse) {
     popupE.insertAdjacentHTML('beforeend', html);
 
     try {
-        document.querySelector('body').appendChild(popupE);
+        frango.find('body').first().appendChild(popupE);
     } catch (e) {
         console.log(e);
     };
@@ -781,9 +785,9 @@ frango.controle_cliques = 0;
 
 function hideMenu(e) {
     frango.controle_cliques = 0;
-    var menuList = document.querySelector('.menu-content');
-    var menuShow = document.querySelector('.menu');
-    var content = document.querySelector('.menu-content > ul');
+    var menuList = frango.find('.menu-content').first();
+    var menuShow = frango.find('.menu').first();
+    var content = frango.find('.menu-content > ul').first();
     var visible = frango.hasClass("menu-full", menuList);
     if (visible) {
         frango.controle_cliques = 1;
@@ -801,11 +805,11 @@ function control_click(e) {
         return false;
     };
     frango.find('.hide-scroll').rmCl('no-height');
-    var menuList = document.querySelector('.menu-content');
+    var menuList = frango.find('.menu-content').first();
     if (menuList) {
-        var menuShow = document.querySelector('.menu');
+        var menuShow = frango.find('.menu').first();
         var visible = frango.hasClass("menu-full", menuList);
-        var content = document.querySelector('.menu-content > ul');
+        var content = frango.find('.menu-content > ul').first();
         if (!visible) {
             frango.addClass("menu-full", menuList);
             frango.addClass("menu-full", menuShow)
@@ -819,12 +823,12 @@ function control_click(e) {
 
 
 frango.loadMenu = function () {
-    var menu = document.querySelector('.menu');
+    var menu = frango.find('.menu').first();
     if (menu) {
         var resize = function () {
             frango.controle_clicques = 0;
-            var opened = document.querySelector('.menu .menu-content.menu-full');
-            var btn = document.querySelector('.menu .mnu-button');
+            var opened = frango.find('.menu .menu-content.menu-full').first();
+            var btn = frango.find('.menu .mnu-button').first();
 
             btn.removeEventListener('click', control_click, true);
             document.removeEventListener('click', hideMenu);
@@ -953,108 +957,8 @@ frango.wait.stop = function (parent, clearAll) {
 
 frango.touch = {};
 
-
-
-frango.touch.oldX = 0;
-frango.touch.oldy = 0;
-frango.touch.startx = 0;
-frango.touch.starty = 0;
-frango.touch.scrolling = false;
-
-frango.touch.moveElementsX = function (elementTouched, posX, locked) {
-    var bodies = frango.find('.hscroll-item', elementTouched);
-    var tot = bodies.elements.length;
-    var leftLast = bodies.elements[tot - 1].offsetLeft;
-    var leftFirst = bodies.elements[0].offsetLeft;
-    var newLeft = 0;
-    var movied = false;
-
-    /*if (slowMove) {
-        frango.touch.tab.addSlowMoviment(bodies);
-    };*/
-
-    bodies.loop(function () {
-        if (posX < frango.touch.oldX) {
-
-            //puxar para esquerda
-            if (locked != 'left') {
-                movied = true;
-                if ((leftLast - (frango.touch.oldX - posX) <= 0)) {
-                    newLeft = (this.offsetLeft - leftLast);
-                } else {
-                    newLeft = (this.offsetLeft - (frango.touch.oldX - posX));
-                };
-
-                if (this.getAttribute('data-index') == tot && newLeft <= 0) {
-                    this.style.left = 0 + "px";
-                    elementTouched.setAttribute('data-locked', 'left');
-                } else {
-                    this.style.left = newLeft + "px";
-                    elementTouched.setAttribute('data-locked', 'not');
-                };
-            };
-        } else if (posX > frango.touch.oldX) {
-
-            //puxar para a direita
-            if (locked != 'right') {
-                movied = true;
-                if (leftFirst + (posX - frango.touch.oldX) >= 0) {
-                    newLeft = this.offsetLeft + Math.abs(leftFirst);
-                } else {
-                    newLeft = (this.offsetLeft + (posX - frango.touch.oldX));
-                };
-
-                if (this.getAttribute('data-index') == 1 && newLeft >= 0) {
-                    this.style.left = 0 + "px";
-                    elementTouched.setAttribute('data-locked', 'right');
-                } else {
-                    this.style.left = newLeft + "px";
-                    elementTouched.setAttribute('data-locked', 'not');
-                };
-            };
-        };
-    });
-
-    return movied;
-
-};
-
-frango.touch.handleMoviment = function (event) {
-
-    var elementTouched = this;
-    var touches = event.changedTouches;
-
-    if (frango.touch.scrolling == false) {
-
-        var locked = elementTouched.getAttribute('data-locked');
-        frango.touch.moveElementsX(elementTouched, touches[0].pageX, locked, false);
-    };
-    frango.touch.oldX = touches[0].pageX;
-    frango.touch.oldy = touches[0].pageY;
-
-
-}
-
-
-frango.touch.start = function (event) {
-    var touches = event.changedTouches;
-    //var elementTouched = this;
-    frango.touch.oldX = touches[0].pageX;
-    frango.touch.oldy = touches[0].pageY;
-    frango.touch.startx = touches[0].pageX;
-    frango.touch.starty = touches[0].pageY;
-    //frango.touch.tab.removeSlowMoviment(frango.find('.tab-body', elementTouched));
-
-};
-
-frango.touch.end = function (event) {
-    frango.touch.oldX = 0;
-    frango.touch.oldy = 0;
-};
-
-
-
 frango.touch.tab = {};
+
 
 frango.touch.tab.oldX = 0;
 frango.touch.tab.oldy = 0;
@@ -1170,10 +1074,9 @@ frango.touch.tab.endTouch = function (event) {
     var movedEnough = false;
     var locked = elementTouched.getAttribute('data-locked');
 
-    //se não moveu o suficiente, então volta para a posição inicial
+
     if (frango.touch.tab.oldX > frango.touch.tab.startx) {
         //puxada para a direita
-        
 
         bodies.loop(function () {
             if ((this.offsetLeft > 0) && (this.offsetLeft >= width * 0.50) && (!movedEnough)) {
@@ -1331,9 +1234,10 @@ frango.tab = function (selector, touchEnabled) {
 
             var pageControl = this;
             var paretElWidth = pageControl.parentElement.offsetWidth;
-
-            pageControl.adSty('width', paretElWidth + "px");
-
+            if(paretElWidth > 0){
+                pageControl.adSty('width', paretElWidth + "px");
+            };
+            
             var tabs = pageControl.find('.tab')
             var tabsCount = tabs.elements.length;
             var pageControlWidth = pageControl.offsetWidth;
@@ -1359,32 +1263,7 @@ frango.tab = function (selector, touchEnabled) {
     configurePageControls(false);
 
 
-};
-
-frango.horizontalScroll = function (resizing = true, elmentSelector = undefined) {
-    var selector = elmentSelector || '';
-    selector = selector + ' .hscroll-group';
-
-    frango.find(selector).loop(function () {        
-        var elements = this.find('.hscroll-item');        
-        var count = elements.elements.length;
-        var itemWidth = elements.first().offsetWidth;
-        //var width = count * itemWidth;
-        //this.style.width = width + "px";
-        /*this.style.left = "0px";*/
-        var idx = 0;
-        elements.loop(function () {
-            this.style.left = (itemWidth * idx) + "px";
-            idx += 1;
-        });
-        if (!resizing) {
-            this.on("touchmove", frango.touch.handleMoviment);
-            this.on("touchstart", frango.touch.start);
-            this.on("touchend", frango.touch.end);
-        };
-
-    });
-};
+}
 
 
 /*LOCAL STORAGE DATA*/
@@ -1516,6 +1395,7 @@ frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, us
     var result = {};
     var routineOk = undefined;
     var routineNotOk = undefined;
+    var routineError = undefined;
     var finalData = "";
     if (!objectHeader) {
         objectHeader = {};
@@ -1546,6 +1426,12 @@ frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, us
     };
     if (useAuthorization == undefined || useAuthorization == null) {
         useAuthorization = true;
+    };
+
+    result.onError = function(method){
+       if(method){
+          routineError = method;
+       };
     };
 
     result.onSuccess = function (method) {
@@ -1605,6 +1491,13 @@ frango.server.ajax = function (url, data, async, objectHeader, useFrangoHost, us
 
         xhttp.open(requestMethod, newUrl, async);
     };
+
+    xhttp.onerror = function(msg){
+        if(routineError){
+            routineError(msg)
+        };
+     };
+     
 
 
     if (objectHeader) {
@@ -1740,6 +1633,10 @@ frango.templatesFunctions.default = function (value, defa, field) {
         return value
     };
 
+};
+
+frango.templatesFunctions.formatDate = function(date, format){
+   return frango.formatDate(date, format[0])
 };
 
 frango.templatesFunctions.between = function (value, params) {
@@ -1918,7 +1815,7 @@ frango.bindDataOnTemplate = function (datasetName, data, parent, empty, keepTemp
             };
             rowTemplate = prepareTemplateBeforeBind(rowTemplate);
             /* check for nested loops */
-            if (hasNestedloop) {
+            if (hasNestedloop || keepTemplate === true ) {
                 var parser = new DOMParser();
                 var nestedDataSetNames = [];
                 tempDoc = parser.parseFromString(rowTemplate, 'text/html');
@@ -1939,11 +1836,11 @@ frango.bindDataOnTemplate = function (datasetName, data, parent, empty, keepTemp
 
             finalTemplate += rowTemplate;
         };
-        if (keepTemplate === true) {
-            template_container.parentNode.insertAdjacentHTML('beforeend', '<div data-datasetname-replicated="' + datasetName + '" >' + finalTemplate + '</div>');
-        } else {
+        if(keepTemplate === true){            
+            template_container.parentNode.insertAdjacentHTML('beforeend', '<div data-datasetname-replicated="'+ datasetName + '" >' + finalTemplate + '</div>');
+        }else{
             template_container.parentNode.insertAdjacentHTML('beforeend', finalTemplate);
-            frango.find(template_container).remove();
+            frango.find(template_container).remove();    
         }
     });
 
@@ -1979,12 +1876,12 @@ frango.bindEmptyDataset = function (datasetName, parent) {
     frango.fillLookup('[data-replicated-dataset="' + datasetName + '"] [data-lookup-url]')
 }
 
-frango.bindDataOnReusableTemplate = function (templateName, listOfObjects, clearTemplate = true, parentElement = undefined) {
-    if (clearTemplate === true) {
-        frango.find('[data-datasetname-replicated="' + templateName + '"]', parentElement).remove();
-    };
-    frango.bindDataOnTemplate(templateName, listOfObjects, parentElement, false, true);
-
+frango.bindDataOnReusableTemplate = function(templateName, listOfObjects, clearTemplate=true, parentElement=undefined){
+  if(clearTemplate === true){
+     frango.find('[data-datasetname-replicated="'+templateName+'"]', parentElement).remove();
+  };
+  frango.bindDataOnTemplate(templateName, listOfObjects, parentElement, false, true);
+    
 };
 
 frango.removeReplicatedDataset = function (datasetName, parent) {
@@ -2014,10 +1911,10 @@ frango.formParser = function (selector) {
 
 frango.formParserJson = function (selector) {
     var frm = frango.find(selector).elements[0];
-    var data = "{";
+    var data = {};
     for (var i = 0; i < frm.length; i++) {
         var ele = frm[i];
-        var value = "";
+        var value = undefined;
         var valueAsObject = ele.hasAttribute('data-value-as-object');
         var name = ele.getAttribute("name");
         if (name) {
@@ -2028,21 +1925,37 @@ frango.formParserJson = function (selector) {
         if (ele.type === "checkbox") {
             value = ele.checked.toString();
             //data += '"' + ele.getAttribute("name").toString() + '":"' + ele.checked.toString() + '",';
+        }else if(ele.type === "text" && ele.dataset.typeelement === "datepicker" ){
+            //value = new Date(ele.value);
+            if(M.Datepicker.getInstance(ele)){
+                value = M.Datepicker.getInstance(ele).date;
+            };           
         } else {
-            value = ele.value.toString();
+            value = ele.value;
             //data += '"' + ele.getAttribute("name").toString() + '":"' + ele.value.toString() + '",';
         };
-        if (valueAsObject) {
+
+        if(valueAsObject){
+            var lookupField = frango.find(ele).attr("data-lookup-field");
+            data[name][[lookupField]] = value;
+        }else{
+            data[name] = value;
+        };
+
+
+        
+            
+        /*if (valueAsObject) {
             var lookupField = frango.find(ele).attr("data-lookup-field");
             value = "{" + '"' + lookupField + '"' + ":" + '"' + value + '"' + "}";
             data += '"' + name + '":' + value + ',';
         } else {
             data += '"' + name + '":"' + value + '",';
-        };
+        }; */
 
     }
 
-    return JSON.parse(data.substr(0, data.length - 1) + "}");
+    return JSON.parse(JSON.stringify(data))  /*JSON.parse(data.substr(0, data.length - 1) + "}");*/
 }
 
 
@@ -2376,7 +2289,8 @@ frango.useConfigComponent = function (configComponentName, newPlaceSelector, obj
 
 
                         if (replaceContainer) {
-                            this.innerHTML = tempDoc.body.innerHTML;
+                            //this.innerHTML = tempDoc.body.innerHTML;
+                            this.html(tempDoc.body.innerHTML)
                         } else {
                             this.insertAdjacentHTML('beforeend', tempDoc.body.innerHTML);
                         };
@@ -2384,7 +2298,8 @@ frango.useConfigComponent = function (configComponentName, newPlaceSelector, obj
                     } else {
 
                         if (replaceContainer) {
-                            this.innerHTML = originalHtml;
+                            //this.innerHTML = originalHtml;
+                            this.html(originalHtml)
                         } else {
                             this.insertAdjacentHTML('beforeend', originalHtml);
                         };
@@ -2704,20 +2619,20 @@ frango.autoComplete = function (selector, methodToGetData, minimumLenth = 3) {
             var container = document.createElement('div');
             container.setAttribute('class', 'autocomplete-container invisible');
             container = parent.appendChild(container);
-
+            container = frango.find(container);
             this.attr('autocomplete', 'off');
 
             this.addEventListener('keyup', function (e) {
                 var inputValue = this.value;
                 if (inputValue.length < minimumLenth) {
-                    container.innerHTML = "";
+                    container.html("");
                     return false;
                 } else {
                     inputValue = inputValue.toUpperCase();
                 };
                 var esc = 27;
                 if (e.keyCode === esc) {
-                    this.parentElement.querySelector('.autocomplete-container').innerHTML = "";
+                    frango.find('.autocomplete-container', this.parentElement).html("")
                     e.stopPropagation();
                     return false;
                 };
@@ -2726,7 +2641,7 @@ frango.autoComplete = function (selector, methodToGetData, minimumLenth = 3) {
                 this.setAttribute('data-value', "");
                 this.setAttribute('data-text', "");
                 if (inputValue == "") {
-                    container.innerHTML = "";
+                    container.html("");
                     return;
                 };
 
@@ -2761,20 +2676,24 @@ frango.autoComplete = function (selector, methodToGetData, minimumLenth = 3) {
                         };
                     };
                     if (html) {
-                        frango.removeClass('invisible', container);
+                        //frango.removeClass('invisible', container);
+                        container.rmCl('invisible');
                         html = '<ul class="suspend">' + html + '</ul>';
-                        container.innerHTML = html;
+                        //container.innerHTML = html;
+                        container.html(html);
                     } else {
                         frango.addClass('invisible', container);
-                        container.innerHTML = "";
+                        //container.innerHTML = "";
+                        container.html("");
                     };
 
-                    frango.find('ul li', container).loop(function () {
+                    frango.find('ul li', container.first()).loop(function () {
                         this.addEventListener('click', function () {
                             search.setAttribute('data-value', this.getAttribute('data-value'));
                             search.value = this.getAttribute('data-text');
                             search.dispatchEvent(eventChoose);
-                            container.innerHTML = "";
+                            //container.innerHTML = "";
+                            container.html("");
                         });
                     });
                 };
@@ -2796,7 +2715,7 @@ frango.autoComplete = function (selector, methodToGetData, minimumLenth = 3) {
     if (body.attr('autocomplete-configured') != "true") {
         document.addEventListener('click', function () {
             frango.find('.autocomplete-container').loop(function () {
-                this.innerHTML = "";
+                this.html("");
             });
         });
         body.attr('autocomplete-configured', true);
@@ -2840,7 +2759,7 @@ frango.bindValidations = function (selector, object_erros) {
                 ele = frango.find('[name="' + key + '_id"', this).first();
             };
             if (ele) {
-                lbl = ele.parentNode.querySelector('label') || ele;
+                lbl = frango.find(ele.parentNode).find('label').first() || ele;
                 ele.parentNode.insertBefore(error_ele, lbl);
             } else {
                 this.appendChild(error_ele);
@@ -3451,6 +3370,9 @@ function runLoadApp() {
         frango.app.intercceptRoute();
     };
 
+
+
+
     if (frango.app.afterInitialize) {
         var idTimeout = setInterval(function () {
             if (Object.keys(frango.templatesToGet).length === 0) {
@@ -3472,16 +3394,12 @@ function runLoadApp() {
 };
 
 window.addEventListener('load', function () {
-
     if (window.location.pathname == '/frango-framework-build-app') {
         frango.app.buildOfflineApp();
     } else {
         frango.config.isBuildingOfflineApp = false;
-        runLoadApp();
+        runLoadApp()
     };
-    frango.horizontalScroll(false);
-    window.addEventListener('resize', frango.horizontalScroll);
-
 });
 
 window.onhashchange = function () {
