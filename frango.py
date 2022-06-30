@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #coding utf-8
 import os
 import sys
@@ -22,7 +22,8 @@ try:
 except:
     has_msvcrt = False
 
-host = '127.0.0.1'
+#host = '127.0.0.1'
+host = '0.0.0.0'
 port = 8081
 server_address = (host, port)
 base_url = 'http://' + host + ':' + str(port)
@@ -660,7 +661,7 @@ def build():
     #shutil.copy(os.path.join(base_dir, 'service-worker.js'), bin_dir)     
     #shutil.copy(os.path.join(base_dir, 'manifest.json'), bin_dir)         
     
-    browser = webdriver.Firefox()
+    browser = webdriver.Chrome(executable_path=os.path.join(base_dir, "chromedriver"))
     print('loading application..')
     browser.get('http://localhost:8081/frango-framework-build-app')
 
